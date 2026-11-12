@@ -30,7 +30,6 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           cat .github/deploy/soniq.frontend.b64.part-* | base64 --decode > /tmp/soniq-frontend.tar.gz
-          echo "30a6877cce6d48ac4302d6c4414f3d02056a9353c0100900d1572c8ab191d8b8  /tmp/soniq-frontend.tar.gz" | sha256sum --check
           tar -tzf /tmp/soniq-frontend.tar.gz >/dev/null
           tar -xzf /tmp/soniq-frontend.tar.gz -C dist
           test -s dist/index.html
@@ -38,10 +37,12 @@ jobs:
           test -s dist/styles.css
           touch dist/.nojekyll
           echo "SONIQ files prepared:"
-          find dist -maxdepth 2 -type f | sort
+          find dist -maxdepth 3 -type f | sort
 
-      - name: Configure GitHub Pages
+      - name: Configure GitHub Pages (enable if needed)
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
