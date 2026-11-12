@@ -1,0 +1,52 @@
+name: Deploy SONIQ to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Rebuild the SONIQ frontend bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/soniq dist
+          cat .github/deploy/soniq.frontend.b64.part-* | base64 --decode > /tmp/soniq-frontend.tar.gz
+          tar -tzf /tmp/soniq-frontend.tar.gz >/dev/null
+          tar -xzf /tmp/soniq-frontend.tar.gz -C dist
+          test -s dist/index.html
+          test -s dist/app.js
+          test -s dist/styles.css
+          touch dist/.nojekyll
+          echo "SONIQ files prepared:"
+          find dist -maxdepth 2 -type f | sort
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
